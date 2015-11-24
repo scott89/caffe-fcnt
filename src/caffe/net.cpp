@@ -634,16 +634,12 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
   CHECK_LT(start, layers_.size());
   for (int i = start; i >= end; --i) {
     //LOG(INFO) << "Net Propagate Down";
-    //if (layer_need_backward_[i]) {
-    layer_need_backward_[i] = true;
-    for (int bottomId = 0; bottomId < bottom_need_backward_[i].size(); bottomId++) {
-      bottom_need_backward_[i][bottomId] = true;
+    if (layer_need_backward_[i]) {
+      // LOG(INFO) << "Layer Propagate Down";
+      layers_[i]->Backward(
+	  top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
+      if (debug_info_) { BackwardDebugInfo(i); }
     }
-    // LOG(INFO) << "Layer Propagate Down";
-    layers_[i]->Backward(
-	top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
-    if (debug_info_) { BackwardDebugInfo(i); }
-    // }
   }
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -653,9 +649,9 @@ void Net<Dtype>::Backward2() {
     //LOG(INFO) << "Net Propagate Down";
     //if (layer_need_backward_[i]) {
     layer_need_backward_[i] = true;
-    for (int bottomId = 0; bottomId < bottom_need_backward_[i].size(); bottomId++) {
-      bottom_need_backward_[i][bottomId] = true;
-    }
+    //for (int bottomId = 0; bottomId < bottom_need_backward_[i].size(); bottomId++) {
+    //  bottom_need_backward_[i][bottomId] = true;
+    //}
     // LOG(INFO) << "Layer Propagate Down";
     layers_[i]->Backward2(
 	top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
