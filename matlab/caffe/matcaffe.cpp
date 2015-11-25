@@ -17,7 +17,7 @@ using namespace caffe;  // NOLINT(build/namespaces)
 // The pointer to the internal caffe::Net instance
 static shared_ptr<SGDSolver<float> > solver_;
 static shared_ptr<SGDSolver<float> > gsolver_;
-static shared_ptr<SGDSolver<float> > lsolver_;
+static shared_ptr<SGDSolver<float> > ssolver_;
 static shared_ptr<Net<float> > net_;
 static int init_key = -2;
 
@@ -427,9 +427,9 @@ if (nrhs != 1){
     net_ = gsolver_->net();
     LOG(INFO) << "Reshape gsolver input";
   }
-  else if (!solver.compare("lsolver")) {
-    net_ = lsolver_->net();
-    LOG(INFO) << "Reshape lsolver input";
+  else if (!solver.compare("ssolver")) {
+    net_ = ssolver_->net();
+    LOG(INFO) << "Reshape ssolver input";
   }
   else {
     mexErrMsgTxt("Unknown solver type");
@@ -465,31 +465,31 @@ static void set_device(MEX_ARGS) {
   Caffe::SetDevice(device_id);
 }
 
-static void get_init_key(MEX_ARGS) {
-  plhs[0] = mxCreateDoubleScalar(init_key);
-}
+//static void get_init_key(MEX_ARGS) {
+//  plhs[0] = mxCreateDoubleScalar(init_key);
+//}
 
-static void init(MEX_ARGS) {
-  if (nrhs != 2) {
-    LOG(ERROR) << "Only given " << nrhs << " arguments";
-    mexErrMsgTxt("Wrong number of arguments");
-  }
-
-  char* param_file = mxArrayToString(prhs[0]);
-  char* model_file = mxArrayToString(prhs[1]);
-
-  net_.reset(new Net<float>(string(param_file)));
-  net_->CopyTrainedLayersFrom(string(model_file));
-
-  mxFree(param_file);
-  mxFree(model_file);
-
-  init_key = random();  // NOLINT(caffe/random_fn)
-
-  if (nlhs == 1) {
-    plhs[0] = mxCreateDoubleScalar(init_key);
-  }
-}
+//static void init(MEX_ARGS) {
+//  if (nrhs != 2) {
+//    LOG(ERROR) << "Only given " << nrhs << " arguments";
+//    mexErrMsgTxt("Wrong number of arguments");
+//  }
+//
+//  char* param_file = mxArrayToString(prhs[0]);
+//  char* model_file = mxArrayToString(prhs[1]);
+//
+//  net_.reset(new Net<float>(string(param_file)));
+//  net_->CopyTrainedLayersFrom(string(model_file));
+//
+//  mxFree(param_file);
+//  mxFree(model_file);
+//
+//  init_key = random();  // NOLINT(caffe/random_fn)
+//
+//  if (nlhs == 1) {
+//    plhs[0] = mxCreateDoubleScalar(init_key);
+//  }
+//}
 
 static void reset(MEX_ARGS) {
   if (net_) {
@@ -570,9 +570,9 @@ static void reshape_input(MEX_ARGS) {
     net_ = gsolver_->net();
     LOG(INFO) << "Reshape gsolver input";
   }
-  else if (!solver.compare("lsolver")) {
-    net_ = lsolver_->net();
-    LOG(INFO) << "Reshape lsolver input";
+  else if (!solver.compare("ssolver")) {
+    net_ = ssolver_->net();
+    LOG(INFO) << "Reshape ssolver input";
   }
   else {
     mexErrMsgTxt("Unknown solver type");
@@ -580,38 +580,38 @@ static void reshape_input(MEX_ARGS) {
   net_->input_blobs()[id]->Reshape(num, ch, h, w);
   net_.reset();
 }
-static void is_initialized(MEX_ARGS) {
-  if (!net_) {
-    plhs[0] = mxCreateDoubleScalar(0);
-  } else {
-    plhs[0] = mxCreateDoubleScalar(1);
-  }
-}
+//static void is_initialized(MEX_ARGS) {
+//  if (!net_) {
+//    plhs[0] = mxCreateDoubleScalar(0);
+//  } else {
+//    plhs[0] = mxCreateDoubleScalar(1);
+//  }
+//}
 
-static void read_mean(MEX_ARGS) {
-  if (nrhs != 1) {
-    mexErrMsgTxt("Usage: caffe('read_mean', 'path_to_binary_mean_file'");
-    return;
-  }
-  const string& mean_file = mxArrayToString(prhs[0]);
-  Blob<float> data_mean;
-  LOG(INFO) << "Loading mean file from" << mean_file;
-  BlobProto blob_proto;
-  bool result = ReadProtoFromBinaryFile(mean_file.c_str(), &blob_proto);
-  if (!result) {
-    mexErrMsgTxt("Couldn't read the file");
-    return;
-  }
-  data_mean.FromProto(blob_proto);
-  mwSize dims[4] = {data_mean.width(), data_mean.height(),
-    data_mean.channels(), data_mean.num() };
-  mxArray* mx_blob =  mxCreateNumericArray(4, dims, mxSINGLE_CLASS, mxREAL);
-  float* data_ptr = reinterpret_cast<float*>(mxGetPr(mx_blob));
-  caffe_copy(data_mean.count(), data_mean.cpu_data(), data_ptr);
-  mexWarnMsgTxt("Remember that Caffe saves in [width, height, channels]"
-      " format and channels are also BGR!");
-  plhs[0] = mx_blob;
-}
+//static void read_mean(MEX_ARGS) {
+//  if (nrhs != 1) {
+//    mexErrMsgTxt("Usage: caffe('read_mean', 'path_to_binary_mean_file'");
+//    return;
+//  }
+//  const string& mean_file = mxArrayToString(prhs[0]);
+//  Blob<float> data_mean;
+//  LOG(INFO) << "Loading mean file from" << mean_file;
+//  BlobProto blob_proto;
+//  bool result = ReadProtoFromBinaryFile(mean_file.c_str(), &blob_proto);
+//  if (!result) {
+//    mexErrMsgTxt("Couldn't read the file");
+//    return;
+//  }
+//  data_mean.FromProto(blob_proto);
+//  mwSize dims[4] = {data_mean.width(), data_mean.height(),
+//    data_mean.channels(), data_mean.num() };
+//  mxArray* mx_blob =  mxCreateNumericArray(4, dims, mxSINGLE_CLASS, mxREAL);
+//  float* data_ptr = reinterpret_cast<float*>(mxGetPr(mx_blob));
+//  caffe_copy(data_mean.count(), data_mean.cpu_data(), data_ptr);
+//  mexWarnMsgTxt("Remember that Caffe saves in [width, height, channels]"
+//      " format and channels are also BGR!");
+//  plhs[0] = mx_blob;
+//}
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //caffe('init_solver', 'solver.prototxt', 'trained_model.caffemodel', 'log.txt(optional)');
 static void init_solver(MEX_ARGS) {
@@ -661,7 +661,7 @@ static void init_gsolver(MEX_ARGS) {
   net_.reset();
   gsolver_.reset();
   //Step 1: init solver
-  if (nrhs <= 1 || nrhs > 3) {
+  if (nrhs < 1 || nrhs > 3) {
     LOG(ERROR) << "Only given " << nrhs << " arguments";
     mexErrMsgTxt("caffe_mex : Wrong number of arguments");
   }
@@ -673,22 +673,25 @@ static void init_gsolver(MEX_ARGS) {
   ReadProtoFromTextFile(solver_file, &solver_param);
 
   gsolver_.reset(new SGDSolver<float>(solver_param));
-
-  char* model_file = mxArrayToString(prhs[1]);
-  if ( !string(model_file).empty() ){
-    LOG(INFO) << "Recovery from " << model_file;
-    gsolver_->net()->CopyTrainedLayersFrom(string(model_file));	
+  
+  char* model_file;
+  if (nrhs >1) {
+    model_file = mxArrayToString(prhs[1]);
+    if ( !string(model_file).empty() ){
+      LOG(INFO) << "Recovery from " << model_file;
+      gsolver_->net()->CopyTrainedLayersFrom(string(model_file));	
+    }
+  mxFree(model_file);
   }
   gsolver_->SetIter(0);
-  mxFree(model_file);
   mxFree(solver_file);
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void init_lsolver(MEX_ARGS) {
+static void init_ssolver(MEX_ARGS) {
   net_.reset();
-  lsolver_.reset();
+  ssolver_.reset();
   //Step 1: init solver
-  if (nrhs <= 1 || nrhs > 3) {
+  if (nrhs < 1 || nrhs > 3) {
     LOG(ERROR) << "Only given " << nrhs << " arguments";
     mexErrMsgTxt("caffe_mex : Wrong number of arguments");
   }
@@ -699,15 +702,18 @@ static void init_lsolver(MEX_ARGS) {
   SolverParameter solver_param;
   ReadProtoFromTextFile(solver_file, &solver_param);
 
-  lsolver_.reset(new SGDSolver<float>(solver_param));
+  ssolver_.reset(new SGDSolver<float>(solver_param));
 
-  char* model_file = mxArrayToString(prhs[1]);
-  if ( !string(model_file).empty() ){
-    LOG(INFO) << "Recovery from " << model_file;
-    lsolver_->net()->CopyTrainedLayersFrom(string(model_file));	
-  }
-  lsolver_->SetIter(0);
+  char* model_file;
+  if (nrhs >1) {
+    model_file = mxArrayToString(prhs[1]);
+    if ( !string(model_file).empty() ){
+      LOG(INFO) << "Recovery from " << model_file;
+      ssolver_->net()->CopyTrainedLayersFrom(string(model_file));	
+    }
   mxFree(model_file);
+  }
+  ssolver_->SetIter(0);
   mxFree(solver_file);
 }
 
@@ -716,8 +722,8 @@ static void presolve_gnet(MEX_ARGS) {
   gsolver_->PreSolve();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void presolve_lnet(MEX_ARGS) {
-  lsolver_->PreSolve();
+static void presolve_snet(MEX_ARGS) {
+  ssolver_->PreSolve();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 static void update_gnet(MEX_ARGS) {
@@ -725,9 +731,9 @@ static void update_gnet(MEX_ARGS) {
   gsolver_->net()->Update();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void update_lnet(MEX_ARGS) {
-  lsolver_->ComputeUpdateValue();
-  lsolver_->net()->Update();
+static void update_snet(MEX_ARGS) {
+  ssolver_->ComputeUpdateValue();
+  ssolver_->net()->Update();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 static void forward_gnet(MEX_ARGS) {
@@ -740,12 +746,12 @@ static void forward_gnet(MEX_ARGS) {
   net_.reset();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void forward_lnet(MEX_ARGS) {
+static void forward_snet(MEX_ARGS) {
   if (nrhs != 1) {
     LOG(ERROR) << "Only given " << nrhs << " arguments";
     mexErrMsgTxt("Wrong number of arguments");
   }
-  net_ = lsolver_->net();
+  net_ = ssolver_->net();
   plhs[0] = do_forward(prhs[0]);
   net_.reset();
 }
@@ -760,22 +766,22 @@ static void backward_gnet(MEX_ARGS) {
   net_.reset();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void backward_lnet(MEX_ARGS) {
+static void backward_snet(MEX_ARGS) {
   if (nrhs != 1) {
     LOG(ERROR) << "Only given " << nrhs << " arguments";
     mexErrMsgTxt("Wrong number of arguments");
   }
-  net_ = lsolver_->net();
+  net_ = ssolver_->net();
   plhs[0] = do_backward(prhs[0]);
   net_.reset();
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-static void backward2_lnet(MEX_ARGS) {
+static void backward2_snet(MEX_ARGS) {
   if (nrhs != 1) {
     LOG(ERROR) << "Only given " << nrhs << " arguments";
     mexErrMsgTxt("Wrong number of arguments");
   }
-  net_ = lsolver_->net();
+  net_ = ssolver_->net();
   plhs[0] = do_backward2(prhs[0]);
   net_.reset();
 }
@@ -801,19 +807,19 @@ static handler_registry handlers[] = {
   // Public API functions
   { "forward",              forward              },
   { "backward",             backward             },
- // { "init",                 init                 },
- // { "is_initialized",       is_initialized       },
+  // { "init",                 init                 },
+  // { "is_initialized",       is_initialized       },
   { "set_mode_cpu",         set_mode_cpu         },
   { "set_mode_gpu",         set_mode_gpu         },
   { "set_phase_train",      set_phase_train      },
   { "set_phase_test",       set_phase_test       },
   { "set_device",           set_device           },
   { "get_weights",          get_weights          },
- // { "get_init_key",         get_init_key         },
+  // { "get_init_key",         get_init_key         },
   { "reset",                reset                },
   // { "read_mean",            read_mean            },
-   { "compute_contribution", compute_contribution },
-   { "set_select",           set_select           },
+  { "compute_contribution", compute_contribution },
+  { "set_select",           set_select           },
   { "reduce",		    reduce               },
   { "init_solver",          init_solver          },
   { "presolve",             presolve             },
@@ -821,16 +827,16 @@ static handler_registry handlers[] = {
   { "reshape_input",        reshape_input        },
   // global/local solver
   { "init_gsolver",         init_gsolver         },
-  { "init_lsolver",         init_lsolver         },
+  { "init_ssolver",         init_ssolver         },
   { "presolve_gnet",        presolve_gnet        },
-  { "presolve_lnet",        presolve_lnet        },
+  { "presolve_snet",        presolve_snet        },
   { "update_gnet",          update_gnet          },
-  { "update_lnet",          update_lnet          },
+  { "update_snet",          update_snet          },
   { "forward_gnet",         forward_gnet         },
-  { "forward_lnet",         forward_lnet         },
+  { "forward_snet",         forward_snet         },
   { "backward_gnet",        backward_gnet        },
-  { "backward_lnet",        backward_lnet        },
-  { "backward2_lnet",       backward2_lnet       },
+  { "backward_snet",        backward_snet        },
+  { "backward2_snet",       backward2_snet       },
   { "backward2_gnet",       backward2_gnet       },
   // The end.
   { "END",                  NULL                 },
