@@ -492,11 +492,11 @@ static void set_device(MEX_ARGS) {
 //}
 
 static void reset(MEX_ARGS) {
-  if (net_) {
-    net_.reset();
-    init_key = -2;
-    LOG(INFO) << "Network reset, call init before use it again";
-  }
+  ssolver_.reset();
+  gsolver_.reset();
+  solver_.reset();
+  net_.reset();
+  init_key = -2;
 }
 
 static void forward(MEX_ARGS) {
@@ -673,7 +673,7 @@ static void init_gsolver(MEX_ARGS) {
   ReadProtoFromTextFile(solver_file, &solver_param);
 
   gsolver_.reset(new SGDSolver<float>(solver_param));
-  
+
   char* model_file;
   if (nrhs >1) {
     model_file = mxArrayToString(prhs[1]);
@@ -681,7 +681,7 @@ static void init_gsolver(MEX_ARGS) {
       LOG(INFO) << "Recovery from " << model_file;
       gsolver_->net()->CopyTrainedLayersFrom(string(model_file));	
     }
-  mxFree(model_file);
+    mxFree(model_file);
   }
   gsolver_->SetIter(0);
   mxFree(solver_file);
@@ -711,7 +711,7 @@ static void init_ssolver(MEX_ARGS) {
       LOG(INFO) << "Recovery from " << model_file;
       ssolver_->net()->CopyTrainedLayersFrom(string(model_file));	
     }
-  mxFree(model_file);
+    mxFree(model_file);
   }
   ssolver_->SetIter(0);
   mxFree(solver_file);
